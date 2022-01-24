@@ -1,0 +1,87 @@
+#!/bin/bash
+cmd=""
+while (test "$cmd" != "nutsout")
+do
+ echo -n "Peanuts> "
+ declare -a cmd
+ read -a cmd
+ case ${cmd[0]} in
+
+   showcase)
+     if [ ${#cmd[*]} -eq 2 ]
+     then
+       less ${cmd[1]}
+     else
+       echo "Error: must be exactly one argument"
+     fi
+     ;;
+
+   nutcall)
+     if [ ${#cmd[*]} -eq 2 ]
+     then
+       grep ${cmd[1]} /etc/passwd | head -n1 | cut -d":" -f5 | cut -d"," -f1
+       grep ${cmd[1]} /etc/passwd | head -n1 | cut -d":" -f5 | cut -d"," -f3
+     else
+       echo "Error: must be exactly one argument"
+     fi
+     ;;
+
+   nutlist)
+     users=`who | cut -d" " -f1`
+     for user in $users
+     do
+       grep $user /etc/passwd | head -n1 | cut -d":" -f5 | cut -d"," -f1
+     done
+     ;;
+
+   nutstuff)
+     ls
+     ;;
+
+   helpnuts)
+     cat help.txt
+     ;;
+
+   bignut)
+     bash
+     ;;
+
+   nutty)
+     delay=0.1
+     echo -n "-"
+     for i in {1..10}
+     do
+       sleep $delay
+       echo -n -e "\b/"
+       sleep $delay
+       echo -n -e "\b|"
+       sleep $delay
+       echo -n -e "\b\\"
+       sleep $delay
+       echo -n -e "\b-"
+     done
+     echo
+     echo ":D"
+     ;;
+
+   peanutbutter)
+     if [ ${#cmd[*]} -eq 2 ]
+     then
+       nano ${cmd[1]}
+     else
+       echo "Error: must be exactly one argument"
+     fi
+     ;;
+
+   spybear)
+     ./spybear "${cmd[@]:1}"
+     ;;
+
+   nutsout)
+    #do nothing!
+    ;;
+
+   *)
+     echo "invalid command"
+ esac
+done

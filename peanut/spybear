@@ -1,0 +1,26 @@
+printf "%-20s%-20s%-20s%-20s%-20s\n" USERID NAME PHONE TTY WHAT
+
+if ( test "$1" = "all" ) then
+  users=`grep BETHE460BEAR /etc/passwd | cut -d":" -f1`
+elif ( test $# -eq 0 ) then
+  users=`who | cut -d" " -f1`
+else
+  users=$*
+fi
+
+for user in $users
+do
+  name=`grep $user /etc/passwd | head -n1 | cut -d":" -f5 | cut -d"," -f1`
+  phone=`grep $user /etc/passwd | head -n1 | cut -d":" -f5 | cut -d"," -f4`
+  tty=`who | grep $user | head -n1 |tr -s ' ' | cut -d" " -f2`
+  #if we can't get tty, then say NOT ON
+  if ( test -z "$tty") then
+    tty="NOT ON"
+  fi
+  what=`w -s | grep $(echo $user | cut -c -8) | head -n1 | tr -s ' ' | cut -d" " -f5`
+  #if we can't get what then say -
+  if ( test -z "$what") then
+    what="-"
+  fi
+  printf "%-20s%-20s%-20s%-20s%-20s\n" "$user" "$name" "$phone" "$tty" "$what"
+done

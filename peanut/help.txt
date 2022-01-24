@@ -1,0 +1,24 @@
+
+Command                 Description
+--------------------------------------------------------------------------------
+showcase filename       Displays filename on the screen one page at a time
+                        with the capability to scroll up or down with the arrow
+                        keys.
+
+nutcall userid          Looks up the phone number of userid and print user’s
+                        full name and office phone number on the screen.
+
+nutlist                 Displays full names of those currently logged in.
+
+nutstuff                Displays contents of current directory.
+
+helpnuts                Displays this help text.
+
+nutty                   Plays a fun animation and then a smiley face.
+
+peanutbutter filename   Edits filename with nano.
+
+spybear ??arg??         Calls the spybear script. Allows for all three formats
+                        as described in the previous assignment.
+
+nutsout                 Exit the peanut shell.
