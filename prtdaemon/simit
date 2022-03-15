@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#compilation
+cc daemon.c -o daemon
+cc user.c -o user
+cc stop.c -o stop
+
+#start daemon
+daemon 1 &
+
+( #subshell
+sleep 1
+user &
+user &
+user &
+sleep 10
+user &
+user &
+wait #waits for all processes in the subshell to finish before continuing
+)
+sleep 1
+#stop daemon
+stop
+rm file* #remove all the files the users made
