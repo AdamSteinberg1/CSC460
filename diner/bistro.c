@@ -1,3 +1,8 @@
+// Adam Steinberg
+// Bob's Bistro
+// CSC 460
+// 04/01/2022
+
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include<sys/wait.h>

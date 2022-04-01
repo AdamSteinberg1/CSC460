@@ -1,3 +1,8 @@
+// Adam Steinberg
+// Beastly Print Daemon - User
+// CSC 460
+// 03/23/2022
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>

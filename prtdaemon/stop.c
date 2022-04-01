@@ -1,3 +1,8 @@
+// Adam Steinberg
+// Beastly Print Daemon - Stop
+// CSC 460
+// 03/23/2022
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

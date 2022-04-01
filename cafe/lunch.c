@@ -1,3 +1,8 @@
+// Adam Steinberg
+// Christina's Cafe
+// CSC 460
+// 04/04/2022
+
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
@@ -60,7 +65,7 @@ void eat()
     sleep(duration);
 }
 
-//starts the ith philosopher who goes on forever
+//starts the ith philosopher 
 void philosopher(int i)
 {
     srand(getpid());
@@ -94,7 +99,7 @@ void setup()
     shmid = shmget(IPC_PRIVATE, (PHILOSOPHER_COUNT+1)*sizeof(int), 0700);
     if (shmid == -1)
     {
-        printf("Error: shmget failed for printQueue.\n");
+        printf("Error: shmget failed.\n");
         exit(1);
     }
     //attach to shared memory
