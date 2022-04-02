@@ -6,7 +6,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
-#include <sys/wait.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,14 +20,43 @@
 
 enum state {thinking, hungry, eating, dead};
 
-int sem_id;
+int semid;
 int shmid;
 int* shmem;
+pid_t philosopher_pids[PHILOSOPHER_COUNT];
 
 void think()
 {
     int duration = 5 + rand()%11; //random int in 5-15
     sleep(duration);
+}
+
+void eat()
+{
+    int duration = 1 + rand()%3; //random int in 1-3
+    sleep(duration);
+}
+
+p(int s,int semid)
+{
+    struct sembuf sops;
+
+    sops.sem_num = s;
+    sops.sem_op = -1;
+    sops.sem_flg = 0;
+    if((semop(semid, &sops, 1)) == -1)
+        printf("'P' error\n");
+}
+
+v(int s, int semid)
+{
+    struct sembuf sops;
+
+    sops.sem_num = s;
+    sops.sem_op = 1;
+    sops.sem_flg = 0;
+    if((semop(semid, &sops, 1)) == -1) 
+        printf("'V' error\n");
 }
 
 void test(int i)
@@ -37,32 +66,26 @@ void test(int i)
         PHILOSOPHER_STATE(RIGHT) != eating)
     {
         PHILOSOPHER_STATE(i) = eating;
-        v(i, sem_id);
+        v(i, semid);
     }
 }
 
 void take_chopsticks(int i)
 {
-    p(MUTEX, sem_id);
+    p(MUTEX, semid);
     PHILOSOPHER_STATE(i) = hungry;
     test(i);
-    v(MUTEX, sem_id);
-    p(i, sem_id);
+    v(MUTEX, semid);
+    p(i, semid);
 }
 
 void put_chopsticks(int i)
 {
-    p(MUTEX, sem_id);
+    p(MUTEX, semid);
     PHILOSOPHER_STATE(i) = thinking;
     test(LEFT);
     test(RIGHT);
-    v(MUTEX, sem_id);
-}
-
-void eat()
-{
-    int duration = 1 + rand()%3; //random int in 1-3
-    sleep(duration);
+    v(MUTEX, semid);
 }
 
 //starts the ith philosopher 
@@ -72,6 +95,7 @@ void philosopher(int i)
     while(CLOCK < 100)
     {
         think();
+        if(CLOCK >= 100) break;
         take_chopsticks(i);
         eat();
         put_chopsticks(i);
@@ -79,20 +103,24 @@ void philosopher(int i)
     PHILOSOPHER_STATE(i) = dead;
 }
 
+//gets shared resources
 void setup()
 {
     //get semaphores, 1 for each philosopher and 1 for mutex
-    sem_id = semget(IPC_PRIVATE, PHILOSOPHER_COUNT+1, 0700);
-    if (sem_id == -1)
+    semid = semget(IPC_PRIVATE, PHILOSOPHER_COUNT+1, 0700);
+    if (semid == -1)
     {
         printf("Error: semget failed.\n");
         exit(1);
     }
     
-    //initialize the semaphores to 1
+    //initialize MUTEX to 1
+    semctl(semid, MUTEX, SETVAL, 1);  
+
+    //initialize other semaphores to 0
     int i;
-    for(i=0;i<PHILOSOPHER_COUNT+1;i++)
-        semctl(sem_id, i, SETVAL, 1);   
+    for(i=0;i<PHILOSOPHER_COUNT;i++)
+        semctl(semid, i, SETVAL, 0);   
 
     //get shared memory
     //shared memory has 1 slot for each philosopher state and an extra slot for current time
@@ -108,13 +136,24 @@ void setup()
     CLOCK = 0; 
 }
 
+//removes shared resources and kills child processes
 void cleanup()
-{
-    if (semctl(sem_id, 0, IPC_RMID, 0) == -1)
+{   
+    //remove semaphores
+    if (semctl(semid, 0, IPC_RMID, 0) == -1)
         printf("Error removing semaphores.\n");
 
+    //remove shared memory
     if (shmctl(shmid, IPC_RMID, NULL) == -1)
         printf("Error removing shared memory.\n");
+
+    //kill child processes if there are any
+    int i;
+    for(i=0; i<PHILOSOPHER_COUNT; i++)
+    {
+        int childPid = philosopher_pids[i];
+        kill(childPid, SIGTERM);
+    }
 }
 
 //return true if all philosophers have died
@@ -131,28 +170,8 @@ bool all_dead()
     return true;
 }
 
-p(int s,int sem_id)
-{
-    struct sembuf sops;
 
-    sops.sem_num = s;
-    sops.sem_op = -1;
-    sops.sem_flg = 0;
-    if((semop(sem_id, &sops, 1)) == -1)
-        printf("'P' error\n");
-}
-
-v(int s, int sem_id)
-{
-    struct sembuf sops;
-
-    sops.sem_num = s;
-    sops.sem_op = 1;
-    sops.sem_flg = 0;
-    if((semop(sem_id, &sops, 1)) == -1) 
-        printf("'V' error\n");
-}
-
+//prints out the clock and states of all philosophers
 void printStates() 
 {
     printf("%d.", CLOCK);
@@ -181,17 +200,26 @@ void printStates()
 
 int main()
 {
+    //gracefully exit when killed
+    //catch multiple types of kill signals
+    signal(SIGTERM, exit);
+    signal(SIGINT, exit);
+    signal(SIGQUIT, exit);
+    signal(SIGTSTP, exit);
+
     setup();
 
     int i;
     for(i=0; i<PHILOSOPHER_COUNT; i++)
     {
-        if(fork()==0)
+        if((philosopher_pids[i]=fork())==0)
         {
             philosopher(i);
             exit(0);
         }
     }
+
+    atexit(cleanup); //the parent should cleanup shared resources at exit
     
     while(!all_dead()) //while there are philosophers alive
     {
@@ -200,6 +228,4 @@ int main()
         CLOCK++;
         printStates();
     }
-
-    cleanup();
 }
