@@ -1,0 +1,24 @@
+#! /bin/bash
+
+#compilation
+gcc consumer.c -o consumer
+gcc producer.c -o producer
+gcc shutdown.c -o shutdown
+
+./consumer 5 10 6 &
+sleep 0.5
+
+( #subshell
+    ./producer 12 3 &
+    ./producer 16 7 &
+    ./producer 30 4 &
+    ./producer 45 3 &
+    sleep 1
+    ./producer 3 2 &
+    ./producer 2 6 &
+    sleep 2
+    ./producer 27 11 &
+    wait #waits for all processes in the subshell to finish before continuing
+)
+
+./shutdown 
