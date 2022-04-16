@@ -233,33 +233,6 @@ struct buffer_data setupBuffer(int buffer_size, int RAM_size)
     return result;
 }
 
-//fills RAM based on the information from the process control block
-void fillRAM(char* RAM, struct ProcessControlBlock* pcb)
-{
-    int i;
-    for(i=0; i<pcb->RAM_size; i++)
-        RAM[i] = '.';
-
-    for(i=0; i<MAX_JOBS; i++)
-    {
-        struct Job* job = &(pcb->jobs[i]);
-        if(job->pid < 0) //ignore removed jobs
-            continue;
-        int start = job->location;
-        if(start < 0) //ignore jobs not in RAM
-            continue;
-        int end = start + job->size;
-
-        int j;
-        for(j=start; j<end; j++)
-        {
-            if(RAM[j] != '.') //TODO remove after debugging
-                printf("Error: overwriting process in RAM at location %d\n", j);
-            RAM[j]=job->id;
-        }
-    }
-}
-
 //returns true if a job of size jobSize can fit at location in RAM
 bool fit(int jobSize, int location, char* RAM, int RAM_size)
 {
