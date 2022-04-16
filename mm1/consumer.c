@@ -420,7 +420,7 @@ void display(struct ProcessControlBlock* pcb, char* RAM, int row_count, int col_
     displayJobs(pcb);
     printf("\n");
     displayRAM(RAM, row_count, col_count);
-    printf("\n");
+    printf("\n\n");
 }
 
 void decrementDurations(struct ProcessControlBlock* pcb)
